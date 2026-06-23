@@ -1,0 +1,862 @@
+{
+  "name": "Pro AI Blog with Pollinations Images",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 8
+            }
+          ]
+        }
+      },
+      "id": "65fa2b22-dc8d-4423-9611-6fad5381bed3",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        400,
+        208
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "===**Role:** A grizzled, cynical DevSecOps veteran and IT Systems Architect who has seen too many catastrophic failures. You drink too much coffee, have 15+ years in the trenches, and have zero patience for corporate tech jargon or vendor hype.\n**Task:** Write a highly opinionated, brutally honest blog post based on this news snippet. DO NOT summarize the news—assume the reader already read the headline. Tell them *why* this matters, *why* it probably happened (human stupidity, bad architecture, lazy coding), and the harsh reality of dealing with this in production.\n**Topic:** {{ $json.title }}\n**Context:** {{ $json.contentSnippet }}\n\n**Directives:**\n1. **The Hook:** Start with a punchy, conversational opening. No \"In recent news\" garbage. Open with a sigh, a complaint, or a hard truth about the state of the industry.\n2. **The \"Lived\" Experience:** Invent a highly realistic, brief anecdote of dealing with a similar headache in a live environment. Use deep, authentic technical jargon correctly (e.g., talking about lazy IAM roles, npm dependency hell, or specific container misconfigurations).\n3. **The Format:** Use standard Markdown. Create H2 and H3 headers that sound like an angry sysadmin wrote them (e.g., \"Why We Keep Falling for This,\" \"The Architecture Nightmare,\" \"Stop Trusting Defaults\"). \n4. **The Veto:** STRICTLY PROHIBITED phrases: \"delve into,\" \"in conclusion,\" \"a testament to,\" \"rapidly evolving,\" \"more robust,\" \"it is crucial to note.\"\n\nOutput ONLY the markdown text.",
+        "options": {}
+      },
+      "id": "b372afe7-e1a0-4bde-ab3a-96ae45f7980f",
+      "name": "Agent 1: The Drafter",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        592,
+        640
+      ],
+      "typeVersion": 1.7,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-latest",
+        "options": {}
+      },
+      "id": "32384830-c060-45d2-a929-86bb8beac202",
+      "name": "Gemini Flash 1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        48,
+        352
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "==**Role:** Ruthless Google Quality Rater & Lead SEO Auditor.\n**Task:** Audit the provided blog draft based on Google's strict E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness) guidelines and Search Intent. You are the final quality gatekeeper before publication.\n**Draft:** {{ $('Agent 1: The Drafter').item.json.output }}\n\n**Audit Criteria:**\n1. **Experience & Expertise:** Does the draft genuinely sound like it was written by an industry insider? Flag any generic, surface-level statements that lack deep technical understanding.\n2. **AI Fluff Detection:** Identify and list any robotic transitions (e.g., \"In conclusion,\" \"It is important to note,\" \"Delve into\").\n3. **Search Intent:** Does this article actually provide value to a reader looking for this topic, or does it just repeat the news? \n4. **Trustworthiness:** Are the claims logical? Does it lack the confident, authoritative tone needed for AdSense approval?\n\n**Output Format:** Provide a strict, bulleted list of actionable instructions for the Final Editor to fix. DO NOT rewrite the text yourself. Just list what needs to be changed, added, or deleted to maximize E-E-A-T.",
+        "options": {}
+      },
+      "id": "09dd62ee-b348-4fcb-bc31-4576985adbb0",
+      "name": "Agent 2: The Critic",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        896,
+        608
+      ],
+      "typeVersion": 1.7,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "656bde80-a90c-402f-9a44-91d9120e9866",
+      "name": "Gemini Flash 2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        48,
+        528
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "===**Role:** A ruthless tech copy-editor who despises AI-generated fluff and generic reporting.\n**Task:** Polish the provided draft, strictly applying the Critic's feedback. Your goal is to make it sound 100% human, highly authoritative, and slightly edgy—perfect for a developer audience.\n**Original Draft:** {{ $('Agent 1: The Drafter').item.json.output }}\n**Critic's Feedback:** {{ $json.output }}\n\n**Editing Directives:**\n1. **Kill the AI Voice:** Hunt down and destroy any remaining robotic transitions (e.g., \"Furthermore,\" \"It is crucial to consider,\" \"As we navigate\"). Replace them with natural, conversational pivots or just delete them entirely.\n2. **Implement Feedback:** Address the Critic's notes flawlessly. If they asked for more technical depth, weave in an advanced, specific concept seamlessly.\n3. **Formatting for Skimmers:** Ensure clean Markdown. Keep paragraphs to 2-3 sentences max. Developers skim, so make it highly readable and punchy.\n4. **The Kicker:** Ensure the final paragraph does NOT summarize the article. It should end on a forward-looking, cynical thought, a stark warning, or a rhetorical question for the reader.\n\nOutput ONLY the final Markdown. Do not include conversational filler or markdown code block wrappers (```).",
+        "options": {}
+      },
+      "id": "f92d6a74-6d70-437f-a995-a4e7775e9d45",
+      "name": "Agent 3: Final Editor",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1200,
+        608
+      ],
+      "typeVersion": 1.7,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-latest",
+        "options": {}
+      },
+      "id": "be8a06bd-4780-46c3-8a89-78b984758f79",
+      "name": "Gemini Flash 3",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        48,
+        736
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "==**Role:** Expert AI Art Director & JSON Data Formatter.\n**Task:** Create TWO highly detailed, visually striking image generation prompts for Stable Diffusion XL based on this article.\n**Article:** {{ $('Agent 3: Final Editor').item.json.output }}\n\n**Image Concept Guidelines:**\n1. **Subject:** Translate the tech concepts (e.g., cybersecurity, AI, cloud infrastructure, or digital marketing) into visual metaphors (e.g., glowing data streams, futuristic servers, neon-lit padlocks).\n2. **Style Keywords:** Use strong SDXL modifiers: \"modern tech editorial illustration, cinematic lighting, vibrant colors, 8k resolution, highly detailed digital art, dramatic composition\".\n3. **Crucial Constraint:** AI image generators struggle with spelling text. You MUST include \"no text, no words, no letters, no logos\" in the prompt descriptions to ensure clean imagery.\n4. **Variety:**\n   - `prompt1` should be a wide, cinematic hero shot (great for the thumbnail).\n   - `prompt2` should be a more focused, macro-detail shot for the middle of the article.\n\n**Output Format Constraint:**\nYou must output STRICTLY valid JSON. Do not include any explanations, conversational text, or markdown formatting (do not use ```json wrappers). Use this exact schema:\n\n{\n  \"prompt1\": \"A cinematic digital illustration of [subject], [modifiers], no text\",\n  \"prompt2\": \"A macro-focus highly detailed shot of [subject], [modifiers], no text\"\n}",
+        "options": {}
+      },
+      "id": "84cb0b2c-4243-4ee4-9450-31c55eb32126",
+      "name": "Image Prompts Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1632,
+        208
+      ],
+      "typeVersion": 1.7,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-latest",
+        "options": {}
+      },
+      "id": "354cbaf0-ca1b-4fcf-9a97-79e631e85f3f",
+      "name": "Gemini Flash 4",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        48,
+        176
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output;\nconst clean = raw.replace(/```json|```/g, '').trim();\nreturn [JSON.parse(clean)];"
+      },
+      "id": "de617c80-4eb3-4f40-8649-219a7f7a616e",
+      "name": "Parse Prompts",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1840,
+        528
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://gen.pollinations.ai/image/' + encodeURIComponent($json.prompt1) + '?model=flux' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk_m0MqrurXIjm8QMYisCnKzFlCm2RuTLfE"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "b161d57b-0608-4dea-aaae-a6d4dcc72c47",
+      "name": "Generate Pollinations Image 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2064,
+        320
+      ],
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.imgbb.com/1/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "image",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "44bbc6c3-63ed-4557-bcab-5a3aebcf9975",
+      "name": "Upload to ImgBB 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2304,
+        320
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "EXY4gf2BoKbyW5im",
+          "name": "Query Auth account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "id": "6bc2cd55-1f79-4936-ba3f-d9d056bc334a",
+      "name": "Wait 10s",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        2176,
+        512
+      ],
+      "typeVersion": 1,
+      "webhookId": "64b42e11-8eee-4554-8fbd-bbc6e51db5b4"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://gen.pollinations.ai/image/' + encodeURIComponent($('Parse Prompts').item.json.prompt2) + '?model=flux' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk_m0MqrurXIjm8QMYisCnKzFlCm2RuTLfE"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "27acb56a-9ebc-4ca2-97ff-78c2097b076f",
+      "name": "Generate Pollinations Image 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2064,
+        704
+      ],
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.imgbb.com/1/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "image",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "598288c8-d931-466d-bee5-28aa7743c433",
+      "name": "Upload to ImgBB 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2304,
+        704
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "EXY4gf2BoKbyW5im",
+          "name": "Query Auth account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const img1 = $('Upload to ImgBB 1').item.json.data.url;\nconst img2 = $('Upload to ImgBB 2').item.json.data.url;\nconst title = $('RSS Read (Fetch 10)').item.json.title;\nlet rawContent = $('Agent 3: Final Editor').item.json.output;\n\n// Clean up the URL slug\nconst slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');\n\n// Clean up any stray markdown wrappers the LLM might have accidentally included\nlet content = rawContent.replace(/^```markdown\\n/, '').replace(/\\n```$/, '').trim();\n\n// Find all H2 headers (## ) and inject the second image before the middle one\nconst headerRegex = /^## /gm;\nlet match;\nlet headers = [];\n\nwhile ((match = headerRegex.exec(content)) !== null) {\n    headers.push(match.index);\n}\n\n// If the article has H2 headers, insert the image before the middle header\nif (headers.length > 0) {\n    const middleHeaderIndex = headers[Math.floor(headers.length / 2)];\n    const imageMarkdown = `\\n\\n![${title}](${img2})\\n\\n`;\n    content = content.slice(0, middleHeaderIndex) + imageMarkdown + content.slice(middleHeaderIndex);\n} else {\n    // Fallback: Just append it to the end if no headers exist\n    content += `\\n\\n![${title}](${img2})`;\n}\n\nreturn [{\n  title: title,\n  slug: slug,\n  markdownContent: content,\n  imageUrl: img1,\n  imageUrl2: img2\n}];"
+      },
+      "id": "a42f8829-122f-4911-91f2-583b91786084",
+      "name": "Format Final Data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        2528,
+        448
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://blog-website-n8n-automated-workflow.vercel.app/api/n8n-webhook",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $json.title }}"
+            },
+            {
+              "name": "slug",
+              "value": "={{ $json.slug }}"
+            },
+            {
+              "name": "markdownContent",
+              "value": "={{ $json.markdownContent }}"
+            },
+            {
+              "name": "imageUrl",
+              "value": "={{ $json.imageUrl }}"
+            },
+            {
+              "name": "imageUrl2",
+              "value": "={{ $json.imageUrl2 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f6834b6d-d164-4223-9ad9-c2f6e2f5d2af",
+      "name": "Post to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2688,
+        448
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vVVPR0FBERH8tPOB",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://thehackernews.com/feeds/posts/default",
+        "options": {}
+      },
+      "id": "7c74351a-a828-463f-9550-aee088f701af",
+      "name": "RSS Read (Fetch 10)",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "position": [
+        400,
+        416
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "removeItemsSeenInPreviousExecutions",
+        "dedupeValue": "={{ $json.guid }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        416,
+        640
+      ],
+      "id": "39ca02ec-fda4-4bd9-afec-63d99eb411c7",
+      "name": "Remove Duplicates"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst randomIndex = Math.floor(Math.random() * items.length);\nreturn [items[randomIndex]];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        416
+      ],
+      "id": "cf7833f2-c3c3-434f-b74f-868c65e36e17",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "DeepSeek-R1",
+          "mode": "id"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        848
+      ],
+      "id": "7b6a6e65-3ee9-4cc4-b39a-51772c848308",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "5ikQW3ddV01SurgX",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "id"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        800
+      ],
+      "id": "88d58e71-32ca-4a52-80a8-18ade852bef8",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "5ikQW3ddV01SurgX",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "id"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        800
+      ],
+      "id": "2c84994b-6bce-4414-b05a-b3244ebf5910",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "5ikQW3ddV01SurgX",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "id"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1632,
+        400
+      ],
+      "id": "5bfa31de-f30c-4413-8dcd-e58e6d91dae3",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "5ikQW3ddV01SurgX",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 60,
+        "unit": "seconds"
+      },
+      "id": "5f0bc4be-9f7c-4ad0-bdc4-08d97be643e2",
+      "name": "Wait 60s",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        832,
+        208
+      ],
+      "typeVersion": 1,
+      "webhookId": "0b282188-e091-43d7-86cf-4b432ef208e9"
+    },
+    {
+      "parameters": {
+        "amount": 60,
+        "unit": "seconds"
+      },
+      "id": "5924bbdb-ac17-4bb2-af44-fdc49044e6e1",
+      "name": "Wait 60s 2",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        1136,
+        208
+      ],
+      "typeVersion": 1,
+      "webhookId": "bd83a3d3-a740-4344-a2e3-defa0796dd0f"
+    },
+    {
+      "parameters": {
+        "amount": 60,
+        "unit": "seconds"
+      },
+      "id": "695bd704-91e4-4bd9-9db4-60338b49d86d",
+      "name": "Wait 60s ",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        1440,
+        208
+      ],
+      "typeVersion": 1,
+      "webhookId": "bd83a3d3-a740-4344-a2e3-defa0796dd0f"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://telegram-proxy.gb030888444.workers.dev/bot8478249409:AAH_y3U_EMnbKi6RdOSntUjLqvK6WotCSPU/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "6893840575"
+            },
+            {
+              "name": "text",
+              "value": "=🚀 <b>New Article Published!</b> <b>Title:</b> {{$('Format Final Data').item.json.title}} <b>URL:</b> https://dailydeveloperinsights.tech/blog/{{$('Format Final Data').item.json.slug}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2896,
+        448
+      ],
+      "id": "20d8c5bb-ef58-49d3-907c-282b03e99a5f",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read (Fetch 10)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 1: The Drafter": {
+      "main": [
+        [
+          {
+            "node": "Wait 60s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 2: The Critic": {
+      "main": [
+        [
+          {
+            "node": "Wait 60s 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 3: Final Editor": {
+      "main": [
+        [
+          {
+            "node": "Wait 60s ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Prompts Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Prompts": {
+      "main": [
+        [
+          {
+            "node": "Generate Pollinations Image 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Pollinations Image 1": {
+      "main": [
+        [
+          {
+            "node": "Upload to ImgBB 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to ImgBB 1": {
+      "main": [
+        [
+          {
+            "node": "Wait 10s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 10s": {
+      "main": [
+        [
+          {
+            "node": "Generate Pollinations Image 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Pollinations Image 2": {
+      "main": [
+        [
+          {
+            "node": "Upload to ImgBB 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to ImgBB 2": {
+      "main": [
+        [
+          {
+            "node": "Format Final Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Final Data": {
+      "main": [
+        [
+          {
+            "node": "Post to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read (Fetch 10)": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Agent 1: The Drafter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent 1: The Drafter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent 2: The Critic",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent 3: Final Editor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Image Prompts Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 60s": {
+      "main": [
+        [
+          {
+            "node": "Agent 2: The Critic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 60s 2": {
+      "main": [
+        [
+          {
+            "node": "Agent 3: Final Editor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 60s ": {
+      "main": [
+        [
+          {
+            "node": "Image Prompts Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Supabase": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f230bccf-fbd0-49fb-ac76-86ece2697b3e",
+  "meta": {
+    "instanceId": "0e9315eabc0ccff068242239982bcd59b54634da89b6b196584a45527957e127"
+  },
+  "id": "V82hRTvQowDGGNLm",
+  "tags": []
+}
