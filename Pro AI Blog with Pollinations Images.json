@@ -566,7 +566,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://telegram-proxy.gb030888444.workers.dev/bot8478249409:AAH_y3U_EMnbKi6RdOSntUjLqvK6WotCSPU/sendMessage",
+        "url": "https://telegram-proxy.gb030888444.workers.dev/bot[YOUR_BOT_TOKEN]/sendMessage",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
