@@ -1,4 +1,7 @@
 # Serverless n8n Blog Pipeline
+
+![The Website](Images/The%20Website.jpg)
+
 **How to Deploy a 100% Free, Always-On n8n Automation Server (Hugging Face + Supabase + CronJob)**
 
 Running a self-hosted n8n instance usually means paying for a VPS. Relying on free ephemeral cloud containers usually means losing all your workflows the moment the server spins down.
@@ -13,6 +16,8 @@ To achieve a zero-cost, persistent setup, we will use four services:
 3. **Cron-job.org:** To prevent the container from sleeping.
 4. **Cloudflare Workers:** To proxy external requests and bypass strict outbound firewalls.
 
+![n8n Workflow](Images/N8N-Workflow.jpg)
+
 ---
 
 ## Step 1: Set Up the Persistent Database (Supabase)
@@ -20,6 +25,9 @@ Hugging Face wipes its local hard drive every time the container restarts. We mu
 
 1. Create a free project on [Supabase](https://supabase.com/). Name it something like `n8n-database` and save the database password securely.
 2. Go to **Settings > Database**.
+
+![DB Schema](Images/DB-Scfema.jpg)
+![DB Tables](Images/DB-Tables.jpg)
 
 > [!IMPORTANT]
 > Hugging Face struggles with IPv6 outbound traffic. You must use Supabase's Session Pooler (IPv4) connection string. Note that the pooler port is typically `6543`.
@@ -85,6 +93,9 @@ Because your Space is Private, a standard ping will be blocked by Hugging Face's
    - **Value:** `Bearer [YOUR_HUGGING_FACE_TOKEN]`
 
 Save and test. You should receive a `200 OK` response with `{"status":"ok"}`. Your server will now stay awake 24/7.
+
+![Cron Job Settings](Images/Corn-Job-ScreenShot.jpg)
+![Cron Job Settings 2](Images/Corn-Job-ScreenShot-2.jpg)
 
 ---
 
